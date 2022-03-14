@@ -1,0 +1,83 @@
+---
+title: 'Class 10: Genome Informatics'
+author: "Taylor F. (A59010460)"
+date: "2/18/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Counting Entries in a CSV
+
+```{r}
+#We first need to read in the .csv file
+mxl <- read.csv("373531-SampleGenotypes-Homo_sapiens_Variation_Sample_rs8067378.csv")
+
+#We can then look at the SNP genotype in each of the observations
+#mxl$Genotype..forward.strand.
+
+#Then we have to get a summary of each genotype as a percentage by dividing total instances of each variation divided by the total
+table(mxl$Genotype..forward.strand.) / nrow(mxl)
+```
+
+```{r}
+#Let's compare the MXL values to the GBR dataset
+gbr <- read.csv("373522-SampleGenotypes-Homo_sapiens_Variation_Sample_rs8067378.csv")
+
+table(gbr$Genotype..forward.strand.) / nrow(gbr)
+```
+
+# RNA-Seq Genotyping Results: What Does it all Mean?
+```{r}
+#We need to read in the appropriate .csv file
+x <- read.table("rs8067378_ENSG00000172057.6.txt")
+head(x)
+```
+
+How many different genotypes do we have?
+
+```{r}
+table(x$geno)
+
+#Search through 'x' for the rows that contain G/G
+x[x$geno == "G/G",]
+
+#To get the expression values for the G/G genotypes
+x[x$geno == "G/G","exp"]
+summary(x[x$geno == "G/G","exp"])
+```
+
+```{r}
+#Summaries of expressions for every genotype
+summary(x[x$geno == "G/G","exp"])
+summary(x[x$geno == "A/A","exp"])
+summary(x[x$geno == "A/G","exp"])
+```
+
+Now let's create a graphical summary of this information
+
+```{r}
+library(ggplot2)
+
+ggplot(x, aes(geno, exp, fill = geno)) + geom_boxplot(notch = TRUE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

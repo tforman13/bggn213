@@ -1,0 +1,188 @@
+---
+title: 'Class 12: RNA-Seq analysis mini-project'
+author: "Taylor F. (A59010460)"
+date: "2/25/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+1. Input our counts and metadata files
+  - Check the format and fix if necessary
+
+```{r Setup, message=FALSE}
+library(DESeq2)
+library(ggplot2)
+library(AnnotationDbi)
+```
+
+# Input counts and metadata
+
+```{r readcsv}
+#Read in the data and set the first column to be the row names
+countData0 <- read.csv("GSE37704_featurecounts.csv", row.names = 1)
+metaData <- read.csv("GSE37704_metadata.csv", row.names = 1)
+#head(countData0)
+head(metaData)
+
+#We need to get rid of the first column of countData
+countData0 <- as.matrix(countData0[,-1])
+head(countData0)
+
+#Now let's remove the rows that sum to 0; we can achieve that by looking through countData0, and only keeping rows whose sum is greater than 0
+countData <- countData0[rowSums(countData0) > 0,]
+head(countData)
+```
+
+# Running a PCA
+
+```{r}
+#Do a PCA on countData and transpose it using t()
+pca <- prcomp(t(countData), scale = TRUE)
+
+summary(pca)
+
+ggplot(as.data.frame(pca$x), aes(PC1, PC2, col = metaData$condition)) + geom_point()
+```
+
+
+2. Run differential expression analysis
+  - Setup that object required by DESeq()
+  - Run DESeq()
+  
+# DESeq Analysis
+
+Like lots of bioconductor functions, it want our data in an organized way.
+
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = countData,
+                             colData = metaData,
+                             design = ~condition)
+
+#Run DESeq on dds
+dds <- DESeq(dds)
+
+#Calculate results of the dds
+res <- results(dds)
+
+head(res)
+```
+
+  
+3. Add some annotation
+  - Gene names and Entrez IDs
+  
+```{r}
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+
+res$symbol <- mapIds(org.Hs.eg.db, keys = row.names(countData), keytype = "ENSEMBL", column = "SYMBOL", multiVals = "first")
+
+res$entrez <- mapIds(org.Hs.eg.db, keys = row.names(countData), keytype = "ENSEMBL", column = "ENTREZID", multiVals = "first")
+
+res$name <- mapIds(org.Hs.eg.db, keys = row.names(countData), keytype = "ENSEMBL", column = "GENENAME", multiVals = "first")
+
+head(res)
+```
+
+4. Create a volcano plot
+
+```{r}
+library(EnhancedVolcano)
+
+x <- as.data.frame(res)
+x$big <- abs(res$log2FoldChange) > 2
+
+EnhancedVolcano(x, lab = x$symbol, x = 'log2FoldChange', y = 'pvalue')
+
+ggplot(x, aes(log2FoldChange, -log(padj), col = big)) + geom_point()
+```
+
+
+5. Pathway analysis
+
+```{r}
+#Load relevant packages
+#Load the packages
+library(pathview)
+library(gage)
+library(gageData)
+
+foldchange <- res$log2FoldChange
+names(foldchange) <- res$entrez
+```
+
+Now we bring in the kegg dataset
+
+```{r}
+data(kegg.sets.hs)
+data(sigmet.idx.hs)
+
+# Focus on signaling and metabolic pathways only
+kegg.sets.hs = kegg.sets.hs[sigmet.idx.hs]
+
+keggres = gage(foldchange, gsets=kegg.sets.hs)
+```
+
+```{r}
+head(keggres$less, 4)
+```
+
+Let's pull up one of these kegg pathways with our DEGs shown.
+
+```{r}
+pathview(gene.data = foldchange, pathway.id = "hsa04110")
+```
+
+![](hsa04110.pathview.png)
+
+Gene Ontology, Reactome
+```{r}
+#Gene Ontology
+data(go.sets.hs)
+data(go.subs.hs)
+
+# Focus on Biological Process subset of GO
+gobpsets = go.sets.hs[go.subs.hs$BP]
+
+gobpres = gage(foldchange, gsets=gobpsets, same.dir=TRUE)
+
+lapply(gobpres, head)
+
+#Reactome
+sig_genes <- res[res$padj <= 0.05 & !is.na(res$padj), "symbol"]
+print(paste("Total number of significant genes:", length(sig_genes)))
+
+write.table(sig_genes, file="significant_genes.txt", row.names=FALSE, col.names=FALSE, quote=FALSE)
+```
+
+
+6. Save our results
+
+```{r}
+write.csv(res, "DESeq_results.csv")
+```
+
+
+7. Go to Joshua Tree
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

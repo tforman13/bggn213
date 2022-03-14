@@ -1,0 +1,5 @@
+This is just a text editor opened in the terminal using the nano command
+
+AWS Instance Name: i-03bbdfac419b7d4df
+
+ssh -i "bggn213_tforman.pem" ubuntu@ec2-52-88-174-108.us-west-2.compute.amazonaws.com

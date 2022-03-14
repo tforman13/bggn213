@@ -1,0 +1,37 @@
+CLUSTAL O(1.2.4) multiple sequence alignment
+
+
+Hard Clam                 -------------------------KVQENFDLSKY--LGRWYENRRYSNL--------F	25
+Venus Clam                --------------------KCKNFTTQPNFDVKRY--AGGWYDIEKTFFA--------G	30
+Silver-lipped Oyster      -----------------KDCVISNFQTQSNFEADKF--VGKWYEIEWMTHQA---ENPND	38
+Pacific Oyster            ------------RAQTGTCPVVSSISVQPGFDYESLANESRWNVVLYS--KIIPIEGLDM	46
+Human                     MNYSKIPAQVDLRRQTERDCRVSSFRVKENFDKARF--SGTW----YAMAKKDP-EGL--	51
+Razor Clam                ------------------------------------------------------------	0
+Bay Scallop               ------------------------------------------------------------	0
+                                                                                      
+
+Hard Clam                 SLFSNCVTAEYTALSETSVRVNNTGWKYLSNYYDNAIG-EAIVMSDGKLGVRF-------	77
+Venus Clam                QMNKSCVKAEYSLRDDGKIDVLNQDYTAELHEENTTG---IAFYKDPNVKSKLTVKL-GT	86
+Silver-lipped Oyster      FW--DDYVTNYTLNDDGSFSLFTAFRSN--PNKTICSL-QNAVMYRTSN-AKYDV---AV	89
+Pacific Oyster            QVVKSDVSLMFSRDADNNKTVTLAGRVRLASSFAFCLKLQGSVEDSSEVPAKLRQSFYNP	106
+Human                     -FLQDNIVAEFSVDETGQMSATAKGRVRLLNNWDVCADMVGTFTDT-EDPAKFKMKYWGV	109
+Razor Clam                ------------------------------------------------------------	0
+Bay Scallop               ------------------------------------------------------------	0
+                                                                                      
+
+Hard Clam                 SEF--QPYEDYWVLSTDYTSYSIVWSCMET--PKGPIQFNSQYLWILSRSPDGVPDE--Q	131
+Venus Clam                SP-----EANYWIVETDYDTYALIWSCA---ELEGIAHADIGW--ILGRKQR---LDENL	133
+Silver-lipped Oyster      SSCRQIRHSPQWIISTDYIRYAIIYSCHVQ-NIDGTCKTWVAK--TFSR-KRTLDDR--Y	143
+Pacific Oyster            LTN-QFLDFNFWILHTDYTNLAVVYACEKIMAADGTCDPGSSYMWTLSRGTSHTAAE--R	163
+Human                     ASFLQKGNDDHWIVDTDYDTYAVQYSCRLL-NLDGTCADSYSF--VFSRDPNGLPPE--A	164
+Razor Clam                ----QVGMKPGWILTTDYENYAVIYSCWSE-QESGECHPSNTYVAVLQRKTDDISPS--H	53
+Bay Scallop               --------DAMWVVSTDYDGYAVTYGCDKVLPESGYCDPSKEAVYTLNRRQDGHTKQ--Q	50
+                                     *:: ***   :: :.*      .*           : *           
+
+Hard_clam                 LQKIM-------------------------------	136
+Venus_clam                ITRLKQKLTSLGLNYE--------------------	149
+Silver-lipped_oyster      ISLAHDTYKDLCLNRH--------------------	159
+Pacific_oyster            ERI-QEIFQSMCLDMTSLRQIEHSDVC---------	189
+Human                     QKIVRQRQEELC-LARQYRLIVHNGYCDGRSERNLL	199
+Razor_Clam                RVEIDRALRRACVEPKKLSKITHYGYCLGR------	83
+Bay_scallop               LIKIENALNSVCVSARTLRPMQQIGEC---------	77

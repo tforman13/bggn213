@@ -1,0 +1,160 @@
+---
+title: 'Class 7: Machine Learning'
+author: "Taylor F. (A59010460)"
+date: "2/9/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+kmeans()
+
+# Generate some example data for clustering
+
+```{r}
+# rnorm(n, mean = 0, sd = 1), where n is the number of observations, mean is where the numbers will "center" around, and sd will be the standard deviation of the set; random number generator from a normal distribution
+
+# generate a set of data where 30 numbers are generated that center around -3 and 30 numbers that are centered around 3
+tmp <- c(rnorm(30,-3), rnorm(30,3))
+x <- cbind(tmp, rev(tmp))
+plot(x)
+```
+
+We are now going to perform k-means clustering on the data
+
+```{r}
+k <- kmeans(x, centers = 4, nstart = 10)
+k
+```
+
+How many points in each cluster (i.e. the size of the cluster)
+
+```{r}
+k$size
+#any of the "available components" from the kmeans() output can be analyzed in this way
+```
+
+How many centroids in each cluster?
+
+```{r}
+k$centers
+```
+
+Plot our results
+
+```{r}
+k$cluster
+plot(x, col = k$cluster)
+```
+
+
+# Recall a very useful feature of R, called recycling
+
+```{r}
+y <- 1:5
+cbind(y, "red")
+#cbind will assume that, because your data set contains 5 items, you want 5 "reds" to be bound to the data set
+cbind(y, c("red", "blue"))
+#this remains true if you ask it to append red and blue to the data set, but it will spit back an error as the data set is not divisible by the number of things you wish to add to it
+```
+
+So we must be careful that when we are coloring, or doing anything that is dependent on lengths of vectors, we are aware of the lengths
+
+# Hierarchical Clustering
+
+```{r}
+#must give hclust() a distance matrix as input, not the raw data
+#there is a custom plot method for hclus objects that results in a cluster dendrogram
+hc <- hclust(dist(x))
+#hc
+plot(hc)
+abline(h=10, col="red")
+```
+
+Now we are going to "cut" the tree to get our two cluster membership vectors. The function to do this is called the "cutree()" function.
+
+```{r}
+#takes the input of an hclust function and a cutoff height
+tree_groups <- cutree(hc, h = 10)
+plot(tree_groups)
+```
+
+# Principal Component Analysis
+
+Principal Component Analysis (PCA) is a very useful method for the analysis of large, multidimensional data sets
+
+## PCA of UK Food Data
+
+Below, we will read/import some data about the food consumption habits of people in the UK
+
+```{r}
+url <- "https://tinyurl.com/UK-foods"
+food_set <- read.csv(url, row.names=1)
+#renames the first column after the row names
+```
+
+Let's look at food_set
+
+```{r}
+head(food_set)
+```
+
+How many rows and columns are in food_set
+
+```{r}
+nrow(food_set)
+ncol(food_set)
+```
+
+We could plot this with a basic barplot
+
+```{r}
+barplot(as.matrix(food_set), col = rainbow(nrow(food_set)))
+```
+
+We can turn off the stacking by defining the "beside" criteria
+
+```{r}
+barplot(as.matrix(food_set), col = rainbow(nrow(food_set)), beside = TRUE)
+```
+
+One plot that might be of more use is called the "pairs plot"
+
+```{r}
+pairs(food_set, col=rainbow(nrow(food_set)), pch=16)
+```
+
+# PCA to the Rescue
+
+What does PCA tell us about this dataset?
+
+```{r}
+#prcomp() is the main PCA function in base R
+pca <- prcomp(t(food_set))
+summary(pca)
+#We can see that PC1 makes up most of the sample variance, and PC1 and PC2 together explain almost all of the variance
+```
+
+## PCA Plot
+
+A plot of PC1 vs. PC2 is often called a PCA plot or a "score plot"
+
+```{r}
+attributes(pca)
+```
+
+To generate a "score plot" we ant the pca$x component of the resulting object
+
+```{r}
+pca$x
+plot(pca$x[,1], pca$x[,2], col = c("orange", "red", "blue","green"), pch = 16)
+```
+
+The loadings (a.k.a. weights) tell us how the original variables contribute to the PCs
+
+```{r}
+pca$rotation
+barplot(pca$rotation[,1], las = 2)
+```
+
+
+

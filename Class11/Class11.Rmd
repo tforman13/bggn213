@@ -1,0 +1,307 @@
+---
+title: 'Class 11: Transcriptomics and the analysis of RNA-Seq data'
+author: "Taylor F. (A59010460)"
+date: "2/23/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Installing DESeq2
+
+```{r}
+#Do this in the console in the future
+#install.packages("BiocManager")
+#BiocManager::install()
+
+#We will also need the DESeq2 package
+#BiocManager::install("DESeq2")
+
+#NOTE: Answer NO to prompts to install from source or update
+
+#Run library(DESeq2) in the console
+```
+
+Today we will run differential expression analysis of some published data from Himes et al. where the authors used a published RNA-seq experiment where airway smooth muscle cells were treated with dexamethasone, a synthetic glucocorticoid steroid with anti-inflammatory effects.
+
+# Importing countData and colData
+
+```{r}
+counts <- read.csv("airway_scaledcounts.csv", row.names=1)
+metadata <- read.csv("airway_metadata.csv")
+
+#Preview the counts dataset
+head(counts)
+
+#Determine how many genes are in this counts dataset
+nrow(counts)
+
+#Determine how many control cell lines used
+ncol(counts)
+
+#Look at the metadata dataset
+metadata
+```
+
+Question 1:
+
+There are `r nrow(counts)` rows, which translate to genes, in the counts dataset.
+
+Question 2:
+
+There are `r ncol(counts)` rows, which translate to individual cell lines, in the counts dataset.
+
+Based on the metadata, it looks like we have four drug-treated and four control cell lines. Our first question is does the drug do anything?
+
+First, we want to check if the metadata matches the counts data order:
+
+```{r}
+#Grab the id column values of the metadata dataset
+metadata$id
+
+#Grab the column names of the counts dataset
+colnames(counts)
+
+#Ask if these values are equivalent (all returned values should be TRUE)
+metadata$id == colnames(counts)
+
+#Alternative method
+all(metadata$id == colnames(counts))
+
+#Fancy method
+if(all(metadata$id == colnames(counts))) {cat("Let's do this!")}
+```
+
+Next, we want to separate the two conditions (control and treated) from "counts" and use a summary statistic to make comparison easier.
+
+```{r}
+#Control first
+#We need to find the ID associated with control conditions (i.e. which id columns also have dex == "control") and then report only the ID of these samples
+control.inds <- metadata[metadata$dex == "control","id"]
+control.inds
+
+#We now use these indices to search through counts and finds these columns
+control.counts <- counts[,control.inds]
+head(control.counts)
+
+#Question 4: We can now access the treated values, too
+treated.inds <- metadata[metadata$dex == "treated","id"]
+treated.inds
+
+treated.counts <- counts[,treated.inds]
+head(treated.counts)
+```
+
+Find the mean count value for each row (i.e. gene). We could use the 'apply()' function or more simply the 'rowMeans()' function.
+
+```{r}
+#Let's now find the means for each of these groups
+control.mean <- rowMeans(control.counts)
+treated.mean <- rowMeans(treated.counts)
+
+#Question 5a: We can plot these mean values against one another
+plot(treated.mean, control.mean, log = "xy")
+
+#Question 5b: We can also use ggplot
+library(ggplot2)
+ggplot(counts, aes(treated.mean, control.mean)) + geom_point() + scale_y_continuous(trans='log10') + scale_x_continuous(trans='log10')
+
+#Question 6: Try plotting both axes on a log scale. What is the argument to plot() that allows you to do this?
+#log = "xy"
+```
+
+We often use log 2 transformation because it is easier to understand, visually.
+
+```{r}
+#20/20
+#log2(20/20)
+#log2(40/20)
+#log2(10/20)
+#log2(80/20)
+
+#Store the log2 fold change between treated and control groups
+log2fc <- log2(treated.mean/control.mean)
+```
+
+Finding and filtering zero values
+
+```{r}
+#We need to find and remove the genes that have zeros for values
+log2fc[1:6]
+
+meancounts <- data.frame(control.mean, treated.mean, log2fc)
+head(meancounts[,1:2] == 0)
+
+z <- data.frame(x = c(1,2,0,4), y = c(1,2,0,0))
+
+#Report which indices are TRUE and FALSE (i.e. sum to 0 or greater than 0) and gives index information
+which(z == 0, arr.ind = TRUE)
+
+unique(which(z == 0, arr.ind = TRUE)[,"row"])
+
+#Apply this principle to the meancounts dataset
+to.rm <- sort(unique(which(meancounts[,1:2] == 0, arr.ind = TRUE)[,"row"]))
+mycounts <- meancounts[-to.rm,]
+#mycounts
+```
+
+There are `r nrow(mycounts)` genes left over after removing zero values.
+
+How many genes have a log2fc more than +2 (i.e. upregulated)?
+
+```{r}
+up.ind <- mycounts$log2fc > 2
+down.ind <- mycounts$log2fc < (-2)
+sum(up.ind)
+sum(down.ind)
+```
+
+There are `r sum(up.ind)` genes upregulated by at least 2log() and `rsum(down.ind)` genes downregulated by at least 2log().
+
+### But this approach does not treat fold-changes equally. There may be significant fold change increases or decreases in a gene expressed very low, and a comparatively large change that is not included in another gene that has a higher basal level of expression.
+
+# DESeq2
+
+This approach will be the right way and will give us the stats.
+
+```{r}
+library(DESeq2)
+```
+
+```{r}
+#Let's look at metadata again and set up the object that DESeq needs with the 'DESeqDataSetFromMatrix()' function
+dds <- DESeqDataSetFromMatrix(countData = counts, colData = metadata, design =~ dex)
+dds
+```
+
+```{r}
+dds <- DESeq(dds)
+res <- results(dds)
+res
+```
+
+## A main result figure
+
+A common main result figure from this type of analysis is called a volcano plot. This is a plot of log2 fold change on the x axis vs. p-value.
+
+```{r}
+#We can also color by significance and fold change
+sigcols <- rep("gray", nrow(res))
+sigcols[ abs(res$log2FoldChange) > 2 ]  <- "red" 
+
+inds <- (res$padj < 0.01) & (abs(res$log2FoldChange) > 2 )
+sigcols[ inds ] <- "darkgreen"
+
+#Plot this data
+plot(res$log2FoldChange, -log(res$padj), xlab = "Log2(FoldChange)",
+      ylab = "-Log(P-value)", col = sigcols)
+
+#Add significance lines to the plot
+abline(v = c(-2,2), col = "black", lty = 2)
+abline(h = -log(0.05), col = "black", lty = 2)
+
+```
+
+# Adding Annotation Data
+
+To help interpret our results we need to understand what the differentially expressed genes are. A first step is to get the gene names in a format we can understan (i.e. gene SYMBOLS).
+
+For this, we will install:
+
+BiocManager::install("AnnotationDbi") BiocManager::install("org.Hs.eg.db")
+
+```{r}
+#Run these in console
+#BiocManager::install("AnnotationDbi")
+#BiocManager::install("org.Hs.eg.db")
+
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+```
+
+We can now use the `mapIds()` function from the AnnotationDbi package to find the gene names.
+
+```{r}
+#To see what is available to map between in the org.Hs.eg.db package
+#columns(org.Hs.eg.db)
+
+#We want to add a column to the res dataset called symbol
+res$symbol <- mapIds(org.Hs.eg.db,
+                     keys = row.names(res), #Our genenames
+                     keytype = "ENSEMBL",        #The format of our genenames
+                     column = "SYMBOL",          #The new format we want to add
+                     multiVals = "first")
+
+#We want to add two addtional columns: the entrez and genename for each. NOTE: We still want to use ENSEMBL for each keytype entry.
+
+res$genename <- mapIds(org.Hs.eg.db,
+                     keys = row.names(res), #Our genenames
+                     keytype = "ENSEMBL",        #The format of our genenames
+                     column = "GENENAME",          #Turning them into full genenames
+                     multiVals = "first")
+
+res$entrez <- mapIds(org.Hs.eg.db,
+                     keys = row.names(res), #Our genenames
+                     keytype = "ENSEMBL",        #The format of our genenames
+                     column = "ENTREZID",          #Adding the entrez ID number
+                     multiVals = "first")
+
+res$uniprot <- mapIds(org.Hs.eg.db,
+                     keys = row.names(res), #Our genenames
+                     keytype = "ENSEMBL",        #The format of our genenames
+                     column = "UNIPROT",          #Adding the Uniprot accession number
+                     multiVals = "first")
+
+head(res)
+```
+
+# Pathway Analysis
+
+```{r}
+# Run in your R console
+#BiocManager::install( c("pathview", "gage", "gageData") )
+
+#Load the packages
+library(pathview)
+library(gage)
+library(gageData)
+
+#Let's load in the kegg.sets.hs dataset
+data(kegg.sets.hs)
+
+# Examine the first 2 pathways in this kegg set for humans
+head(kegg.sets.hs, 2)
+```
+
+```{r}
+#Vectors can have names assigned to the different values
+foldchange <- res$log2FoldChange
+names(foldchange) <- res$entrez
+head(foldchange)
+
+#We can now run gene set enrichment (a.k.a. pathway analysis)
+keggres <- gage(foldchange, gsets = kegg.sets.hs)
+
+#We can find out what is in keggres by calling the `attributes()` function
+attributes(keggres)
+```
+
+I will first look at the "down/less" list of pathways
+
+```{r}
+head(keggres$less, 3)
+```
+
+![](hsa05310.pathview.png)
+
+Now let's look specifically at the third entry from above
+
+```{r}
+pathview(gene.data = foldchange, pathway.id = "hsa05310")
+```
+
+# Save My Results
+
+```{r}
+write.csv(res, file = "deseq_results.csv")
+```

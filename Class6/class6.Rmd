@@ -1,0 +1,197 @@
+---
+title: 'Class 6: R Functions'
+author: "Taylor Forman (A59010460)"
+date: "2/4/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+In this class we are going to learn all about functions in R
+
+First we will write a function to grade some student scores.
+
+```{r}
+# Example input vectors to start with
+student1 <- c(100, 100, 100, 100, 100, 100, 100, 90)
+student2 <- c(100, NA, 90, 90, 90, 90, 97, 80)
+student3 <- c(90, NA, NA, NA, NA, NA, NA, NA)
+```
+
+```{r}
+mean(student3, na.rm = TRUE)
+```
+
+mean(x, na.rm = FALSE/TRUE) where NA values are removed from the vector
+
+This does not help us calculate an average for student 3, as the only value taken into account is the first numerical value
+
+To find NA values (not available, a.k.a. missing data) we found the `is.na()` function.
+
+```{r}
+student2
+is.na(student2)
+```
+
+`is.na()` is not what we want
+
+We use logical vectors all the time in R like this
+
+```{r}
+x <- 1:5
+x > 2
+```
+
+We can search through a particular vector to search for a particular value
+
+We can also use the `is.na()` function within a vector query to search for NA values in a vector
+
+```{r}
+student2
+student2[is.na(student2)]
+```
+
+Lastly, we can set these returned NA values to 0
+
+We should work with a placeholder variable ('x') instead of changing the original student2
+
+```{r}
+x <- student2
+x[is.na(x)]
+x[is.na(x)] <- 0
+x
+mean(x)
+```
+
+This now replaces NA with 0 in the 'x' vector
+
+We can also do this with student3
+
+```{r}
+y <- student3
+y[is.na(y)] <- 0
+y
+mean(y)
+```
+
+We now need to remove the lowest grade from each student's vector (after replacing NAs with 0s)
+
+We can use the `min()` function to find the smallest value
+
+We can use `which.min()` to find the location of the smallest value in the vector
+
+```{r}
+student1
+min(student1)
+which.min(student1)
+```
+
+But we still need to remove this value
+
+Making a location in a vector negative removes this entry
+
+```{r}
+student1[8]
+student1[-8]
+```
+
+We can apply this technique in tandem with replacing NAs with 0s and then find the mean of this modified vector
+
+```{r}
+z <- student1
+z[-which.min(z)]
+mean(z[-which.min(z)])
+
+# Assigns a student2 vector to a new variable that we can change without worry 
+mod_student2 <- student2
+
+# Finding where the NA values in the new vector (this is mostly just a checkpoint for me, not actually that useful)
+mod_student2[is.na(mod_student2)]
+
+# Assigning the value of 0 to any NA values in the vector
+mod_student2[is.na(mod_student2)] <- 0
+
+# Prints modified student2 vector without the lowest grade
+mod_student2[-which.min(mod_student2)]
+
+# Calculates the mean of the modified student2 vector
+mean(mod_student2[-which.min(mod_student2)])
+```
+
+We are now ready to make this entire process into a function called `grade()`
+
+Every function has at least 3 components:
+- Name (grade)
+- Input arguments (student1, student2, etc.)
+- Body (working code snippet)
+
+```{r}
+grade <- function(x) {
+  # Make NA values 0
+  x[is.na(x)] <- 0
+  # Exclude lowest score and calculate average
+  mean(x[-which.min(x)])
+}
+```
+
+Once this code is run (and appears in the environment), we can try it out
+
+```{r}
+grade(student1)
+grade(student2)
+grade(student3)
+```
+
+## Grade the Class
+
+To read a CSV file we can use the `read.csv()` function:
+
+```{r}
+gradebook <- read.csv("https://tinyurl.com/gradeinput", row.names = 1)
+head(gradebook)
+```
+
+We also want the function to be able to read values from an online database of grades
+
+To do this, we will use the `apply()` function
+
+### Question 1: Write a function grade() to determine an overall grade from a vector of student homework assignment scores dropping the lowest single score. If a student misses a homework (i.e. has an NA value) this can be used as a score to be potentially dropped. Your final function should be adquately explained with code comments and be able to work on an example class gradebook such as this one in CSV format: “https://tinyurl.com/gradeinput”.
+
+```{r}
+# Initiate the apply function, state the vector/matrix to be applied to, use 1 to apply the function to all rows and 2 to apply the function to each column, and lastly input the function we wish to use
+apply(gradebook, 1, grade)
+```
+
+### Question 2: Using your grade() function and the supplied gradebook, Who is the top scoring student overall in the gradebook?
+
+```{r}
+scores <- apply(gradebook, 1, grade)
+scores
+which.max(scores)
+```
+
+### Question 3: From your analysis of the gradebook, which homework was toughest on students (i.e. obtained the lowest scores overall)?
+
+```{r}
+# Checks the mean scores of the homework values when the NAs are removed
+apply(gradebook, 2, mean, na.rm=TRUE)
+apply(gradebook, 2, median, na.rm=TRUE)
+```
+
+Homework 3 appears to have been the most difficult overall based on the mean, but we need to take into account the median to eliminate the outliers, which results in Homework 2
+
+
+### Question 4: Optional Extension - From your analysis of the gradebook, which homework was most predictive of overall score (i.e. highest correlation with average grade score)?
+
+
+
+### Question 5: Make sure you save your Rmarkdown document and can click the “Knit” button to generate a PDF foramt report without errors. Finally, submit your PDF to gradescope.
+
+```{r}
+vec <- c(13, 5, 14, NA, 124, NA, 23, NA)
+sum(is.na(vec))
+mean(vec, na.rm = TRUE)
+mean(na.omit(vec))
+mean?
+```
+
